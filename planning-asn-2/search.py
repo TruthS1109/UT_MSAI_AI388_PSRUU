@@ -65,7 +65,13 @@ class GameStateProblem(Problem):
 
         TODO: You need to set self.search_alg_fnc here
         """
-        self.search_alg_fnc = None
+        if alg == "bfs":
+            self.search_alg_fnc = self.bfs_search_algorithm
+        elif alg == "dfs":
+            self.search_alg_fnc = self.dfs_search_algorithm
+        else:
+            self.search_alg_fnc = self.bfs_search_algorithm  # Default to BFS
+        
 
     def get_actions(self, state: tuple):
         """
@@ -102,8 +108,139 @@ class GameStateProblem(Problem):
         s, p = state
         k, v = action
         offset_idx = p * 6
-        return tuple((tuple( s[i] if i != offset_idx + k else v for i in range(len(s))), (p + 1) % 2))
+        
+        #Create new state by updating the moved piece's position
+        new_state_list = list(s)
+        new_state_list[offset_idx + k] = v
+        
+        #switht to next player
+        next_player = (p + 1) % 2
+        
+        return (tuple(new_state_list), next_player)
+        
+    def bfs_search_algorithm(self):
+        """
+        Breadth-First Search algorithm to find optimal path from initial state to goal state.
+        
+        Returns:
+            A list of (state, action) pairs representing the optimal path from initial to goal state.
+            Format: [(s1, a1), (s2, a2), ..., (sN, None)] where sN is a goal state.
+        """
+        
+        #If initial state is already a goal state   
+        if self.is_goal(self.initial_state):
+            return [(self.initial_state, None)]
+        
+        # BFS initialization
+        frontier = queue.Queue()
+        frontier.put(self.initial_state)  # Each entry is a state
+        
+        came_from = {self.initial_state: (None, None)}  # state -> (parent_state, action)
+        
+        while not frontier.empty():
+            current_state = frontier.get()
+            
+            actions = self.get_actions(current_state)
+            
+            for action in actions:
+                next_state = self.execute(current_state, action)
+                
+                #skip if already visited
+                if next_state in came_from:
+                    continue
 
+                # Record the path
+                came_from[next_state] = (current_state, action)
+
+                # Check if we reached a goal state
+                if self.is_goal(next_state):
+                    # Reconstruct path
+                    return self.reconstruct_path(came_from, next_state)
+                        # path = []
+                        # while next_state is not None:
+                        #     parent_state, action = came_from[next_state]
+                        #     path.append((next_state, action))
+                        #     next_state = parent_state
+                        # path.reverse()
+                        # return path
+                frontier.put(next_state)
+                
+        return []
+            # # Check if we reached a goal state
+            # if self.is_goal(current_state):
+            #     # Reconstruct path
+            #     path = []
+            #     while current_state is not None:
+            #         parent_state, action = came_from[current_state]
+            #         path.append((current_state, action))
+            #         current_state = parent_state
+            #     path.reverse()
+            #     return path
+            
+            # # Expand the current state
+            # for action in self.get_actions(current_state):
+            #     next_state = self.execute(current_state, action)
+                
+            #     if next_state not in came_from:  # Not visited
+            #         came_from[next_state] = (current_state, action)
+            #         frontier.put(next_state)
+        
+        
+        
+        # return tuple((tuple( s[i] if i != offset_idx + k else v for i in range(len(s))), (p + 1) % 2))
+    def dfs_search_algorithm(self):
+        """
+        Depth-First Search algorithm to find a path from initial state to goal state.
+        """
+        if self.is_goal(self.initial_state):
+            return [(self.initial_state, None)]
+
+        stack = [self.initial_state]
+        came_from = {self.initial_state: (None, None)}
+
+        while stack:
+            current_state = stack.pop()
+
+            if self.is_goal(current_state):
+                return self.reconstruct_path(came_from, current_state)
+
+            for action in self.get_actions(current_state):
+                next_state = self.execute(current_state, action)
+
+                if next_state not in came_from:  # Not visited
+                    came_from[next_state] = (current_state, action)
+                    stack.append(next_state)
+
+        return []
+
+    def reconstruct_path(self, came_from, goal_state):
+        """
+        Reconstruct the path from initial state to goal state using the came_from dictionary.
+        
+        Args:
+            came_from: Dictionary mapping state -> (parent_state, action_from_parent)
+            goal_state: The goal state we reached
+            
+        Returns:
+            List of (state, action) pairs in order from initial to goal state
+        """
+        path = []
+        current_state = goal_state
+        current_action = None
+        
+        # Work backwards from goal to initial state
+        while current_state is not None:
+            path.append((current_state, current_action))
+            current_state, current_action = came_from.get(current_state, (None, None))
+        
+        # Reverse the path to get from initial to goal
+        path.reverse()
+        
+        # The first state should have action = None (no action taken yet)
+        # Subsequent states should have the action that was taken to reach them
+        return path
+    
+    
     ## TODO: Implement your search algorithm(s) here as methods of the GameStateProblem.
     ##       You are free to specify parameters that your method may require.
     ##       However, you must ensure that your method returns a list of (state, action) pairs, where
@@ -128,8 +265,18 @@ class GameStateProblem(Problem):
     ## NOTE: self.execute acts like the transition function.
     ## NOTE: Remember to set self.search_alg_fnc in set_search_alg above.
     ## 
-    """ Here is an example:
-    
+   
+    # Alias the search function for easy access
+    def search(self):
+        """Main search method that uses the selected algorithm."""
+        if self.search_alg_fnc is None:
+            self.set_search_alg()  # Ensure algorithm is set
+        
+        return self.search_alg_fnc()
+
+    """
+    Here is an example:
+
     def my_snazzy_search_algorithm(self):
         ## Some kind of search algorithm
         ## ...
