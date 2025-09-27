@@ -258,6 +258,8 @@ class Rules:
         visited = set()
         queue = [start_pos]
         visited.add(start_pos)
+        
+        #The following logic is inspired by LLM tool assistance
 
         while queue:
             current = queue.pop(0)
@@ -322,6 +324,7 @@ class Rules:
         row_step = 0 if d_row == 0 else (1 if d_row > 0 else -1)
         
         #Check all positions between start_pos and end_pos for obstructions
+        #The following part was completed with support of LLM tool assistance
         steps = max(abs(d_col), abs(d_row))
         for step in range(1, steps):
             intermediate_col = start_col + step * col_step
@@ -397,6 +400,7 @@ class GameSimulator:
         offset_idx = player_idx * 6 ## Either 0 or 6
         
         # Get valid moves for all pieces
+        #The following part was completed with support of LLM tool assistance
         for rel_idx in range(5):    
             piece_idx = offset_idx + rel_idx
             piece_moves = Rules.single_piece_actions(self.game_state, piece_idx)

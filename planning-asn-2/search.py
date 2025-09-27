@@ -166,26 +166,7 @@ class GameStateProblem(Problem):
                 frontier.put(next_state)
                 
         return []
-            # # Check if we reached a goal state
-            # if self.is_goal(current_state):
-            #     # Reconstruct path
-            #     path = []
-            #     while current_state is not None:
-            #         parent_state, action = came_from[current_state]
-            #         path.append((current_state, action))
-            #         current_state = parent_state
-            #     path.reverse()
-            #     return path
-            
-            # # Expand the current state
-            # for action in self.get_actions(current_state):
-            #     next_state = self.execute(current_state, action)
-                
-            #     if next_state not in came_from:  # Not visited
-            #         came_from[next_state] = (current_state, action)
-            #         frontier.put(next_state)
-        
-        
+
         
         # return tuple((tuple( s[i] if i != offset_idx + k else v for i in range(len(s))), (p + 1) % 2))
     def dfs_search_algorithm(self):
