@@ -1,4 +1,5 @@
 import numpy as np
+import random
 
 class BoardState:
     """
@@ -70,14 +71,42 @@ class BoardState:
         white_ball_pos = self.decode_single_pos(self.state[5])
         black_ball_pos = self.decode_single_pos(self.state[11])
         
+        print(f"[DEBUG] White ball: {white_ball_pos}, Black ball: {black_ball_pos}")
+        
         #check if balls are actually on the correct pieces
-        if white_ball_pos[1] == 7:  # white_ball_on_piece :
+        if white_ball_pos[1] >= 7:  # white_ball_on_piece :
+            print("[DEBUG] White wins!")
             return True
 
-        if black_ball_pos[1] == 0:  # black_ball_on_piece:
+        if black_ball_pos[1] <= 0:  # black_ball_on_piece:
+            print("[DEBUG] Black wins!")
             return True
         
         return False
+    
+    ## New function get_winner for Assignment 3
+    def get_winner(self):
+        """
+        Returns the winner of the game if in a terminal state.
+        Output:
+         0 -  if white wins, 
+         1 -  if black wins, 
+         None otherwise.
+        """
+        if not self.is_valid():
+            return None
+    
+        ## The code below was completed with prompt assistance of Github Copilot(AI tool)
+        white_ball_pos = self.decode_single_pos(self.state[5])
+        black_ball_pos = self.decode_single_pos(self.state[11])
+        
+        if white_ball_pos[1] == 7:  # white_ball_on_piece :
+            return 0
+
+        if black_ball_pos[1] == 0:  # black_ball_on_piece:
+            return 1
+        
+        return None
 
     def is_valid(self):
         """
@@ -93,28 +122,13 @@ class BoardState:
         TODO: You need to implement this.
         """
         # Check 1: All pieces must be within the board boundaries
-        ## LLM tool Copilot suggested these lines of this check rule below
+        ## This check rule below was added with prompt assistance of Github Copilot(AI tool)
         max_pos = self.N_ROWS * self.N_COLS
         for pos in self.state:
             if not isinstance(pos, (int, np.integer)):
                 return False
             if pos < 0 or pos >= max_pos:
                 return False
-            
-        # # Check 2: No two pieces can occupy the same position
-        # if len(set(self.state)) != 12:
-        #     return False
-        
-        # # Check 3: Each player must have exactly one ball piece
-        # if self.state[5] < 50 or self.state[5] > 55:
-        #     return False
-        # if self.state[11] < 50 or self.state[11] > 55:
-        #     return False
-        
-        # # Check 4: All other pieces must be block pieces
-        # for pos in self.state[:5] + self.state[6:11]:
-        #     if pos < 0 or pos >= 50:
-        #         return False
         
         #Check 2, 
         # Blocks positions: indices 0-4 (white blocks), 6-10 (black blocks)
@@ -127,13 +141,8 @@ class BoardState:
         if len(set(combined_blocks)) != 10:
             return False
 
-        # # Check 5: All decoded positions must be within the board boundaries
-        # # This check is generated with LLM tool assistance
-        # for pos in combined_blocks + [white_ball_pos, black_ball_pos]:
-        #     col, row = self.decode_single_pos(pos)
-        #     if col < 0 or col >= self.N_COLS or row < 0 or row >= self.N_ROWS:
-        #         return False
-
+        ## This check rule below was added with prompt assistance of Github Copilot(AI tool)
+        # Check 3: Balls must be on the board
         # Balls must coincide with one of the player's block positions
         white_ball_pos = int(self.state[5])
         black_ball_pos = int(self.state[11])
@@ -141,17 +150,7 @@ class BoardState:
         if white_ball_pos not in white_block_positions:
             return False
         if black_ball_pos not in black_block_positions:
-            return False
-        
-        # # Check 6: Balls must be on their respective sides of the board(same color as player)
-        #  #This check is generated with LLM tool assistance
-        #  #White ball (index 5) must be on one of white's pieces (indices 0-4)
-        # if self.state[5] not in self.state[0:5]:
-        #     return False
-        
-        # #Black ball (index 11) must be on one of black's pieces (indices 6-10)
-        # if self.state[11] not in self.state[6:11]:
-        #     return False
+            return False        
 
         return True
 
@@ -173,16 +172,17 @@ class Rules:
         moves = set()
 
         # Knight move patterns: (±1, ±2) and (±2, ±1)
-        ## LLM tool Copilot suggested this line code below
+        ## LLM tool Copilot suggested code below in this function with minor modifications
         patterns = [(1,2), (2,1), (-1,2), (-2,1), 
                    (1,-2), (2,-1), (-1,-2), (-2,-1)]
         
-        # The following part was completed with support of LLM tool (ChatGPT) assistance
-        for dc, dr in patterns:
-            new_col, new_row = col + dc, row + dr
+        for dcol, drow in patterns:
+            new_col, new_row = col + dcol, row + drow
             if 0 <= new_col < board_state.N_COLS and 0 <= new_row < board_state.N_ROWS:
                 new_pos = board_state.encode_single_pos((new_col, new_row))
                 moves.add(new_pos)
+                
+        ## End of LLM suggested code
 
         return moves
 
@@ -215,8 +215,10 @@ class Rules:
 
         # Knight moves that land on unoccupied squares (can't land where any block is)
         candidate_moves = Rules.get_knight_moves(current_pos, board_state)
+        
         # A block may only move to unoccupied spaces on the board (cannot land on any block)
         # Note: balls occupy the same cell as their block; we only check block occupancy (10 block positions)
+        ## The line below was added with prompt assistance of Github Copilot(AI tool)
         block_positions = {int(board_state.state[i]) for i in range(0,5)} | {int(board_state.state[i]) for i in range(6,11)}
 
         valid_moves = {m for m in candidate_moves if m not in block_positions}
@@ -311,7 +313,6 @@ class Rules:
             return False
         
         ## The code below was completed with prompt assistance of Github Copilot(AI tool)
-        ## LLM Copilot suggested these lines of code below 
         #Determine the step direction
         if dist_col == 0:
             col_step = 0
@@ -352,11 +353,22 @@ class GameSimulator:
         """
         Runs a game simulation
         """
-        while not self.game_state.is_termination_state():
+        
+        print(f"DEBUG====Starting game simulation: player 0 = {type(self.players[0]).__name__}, player 1 = {type(self.players[1]).__name__}")
+
+        MAX_ROUNDS = 200
+        while not self.game_state.is_termination_state() and self.current_round < MAX_ROUNDS:
+        # while not self.game_state.is_termination_state():
+            
+            
+
             ## Determine the round number, and the player who needs to move
             self.current_round += 1
             player_idx = self.current_round % 2
             ## For the player who needs to move, provide them with the current game state
+            print(f"DEBUG====Turn for player {player_idx} ({type(self.players[player_idx]).__name__})")
+            print("DEBUG: game_state =", self.game_state.make_state())
+            
             ## and then ask them to choose an action according to their policy
             action, value = self.players[player_idx].policy( self.game_state.make_state() )
             print(f"Round: {self.current_round} Player: {player_idx} State: {tuple(self.game_state.state)} Action: {action} Value: {value}")
@@ -400,7 +412,7 @@ class GameSimulator:
         offset_idx = player_idx * 6 ## Either 0 or 6
         
         # Get valid moves for all pieces
-        #The following part was completed with support of LLM tool(ChatGPT)  assistance
+        #The following part in this function was completed with support of LLM tool(ChatGPT) assistance
         for rel_idx in range(5):    
             piece_idx = offset_idx + rel_idx
             piece_moves = Rules.single_piece_actions(self.game_state, piece_idx)
@@ -414,9 +426,9 @@ class GameSimulator:
             
         # Remove actions that don't change the player's portion of the state
         current_positions = [int(self.game_state.state[i]) for i in range(offset_idx, offset_idx + 6)]
-        valid_actions = {action for action in valid_actions if action[1] != current_positions[action[0]]}
-
-
+        valid_actions = {action for action in valid_actions 
+                         if action[1] != current_positions[action[0]]}
+        
         return valid_actions
 
     def validate_action(self, action: tuple, player_idx: int):
@@ -437,8 +449,7 @@ class GameSimulator:
         
         rel_idx, pos = action
         
-        ## During Debugging process,inspired by LLM tool (ChatGPT) assistance
-        ## LLM ChatGPT suggested these lines of code below 
+        ## During Debugging process,below part inspired by LLM tool (ChatGPT) assistance
         if not isinstance(action, tuple) or len(action) != 2:
             raise ValueError("Action must be a tuple of (relative_idx, position).")
                 
@@ -448,7 +459,7 @@ class GameSimulator:
 
         # Check position validity
         max_pos = self.game_state.N_ROWS * self.game_state.N_COLS
-        if not isinstance(pos, int) or pos < 0 or pos >= max_pos:
+        if not isinstance(pos, (int, np.integer)) or pos < 0 or pos >= max_pos:
             raise ValueError("Position must be an integer in the valid board range [0, 55].")
         
         #Get all valid actions and check if the action is in the valid actions
@@ -470,11 +481,8 @@ class GameSimulator:
         #             raise ValueError("Ball can only be moved to a position occupied by its own pieces.")
         #     else: # Moving a block piece
         #         raise ValueError("Position is already occupied by another piece.")
-                
 
-        
-        return True
-    
+   
     def update(self, action: tuple, player_idx: int):
         """
         Uses a validated action and updates the game board state
@@ -482,3 +490,251 @@ class GameSimulator:
         offset_idx = player_idx * 6 ## Either 0 or 6
         idx, pos = action
         self.game_state.update(offset_idx + idx, pos)
+
+##==========================================================================================
+##==========================================================================================
+## Added Player Class below for Assignment 3 (From README instructions)
+class Player:
+    def __init__(self, policy_fnc):
+        self.policy_fnc = policy_fnc
+
+    def policy(self, decode_state):
+        pass
+
+#Below is the AdversarialSearchPlayer class for Assignment 3 (From README instructions)
+class AdversarialSearchPlayer(Player):
+    def __init__(self, gsp, player_idx,search_depth=2):
+        """
+        You can customize the signature of the constructor above to suit your needs.
+        In this example, in the above parameters, gsp is a GameStateProblem, and
+        gsp.adversarial_search_method is a method of that class.  
+        """
+        super().__init__(gsp.adversarial_search_method)
+        self.gsp = gsp
+        self.b = BoardState()
+        self.player_idx = player_idx
+        self.search_depth = search_depth  
+
+    def policy(self, decode_state):
+        """
+        Here, the policy of the player is to consider the current decoded game state
+        and then correctly encode it and provide any additional required parameters to the
+        assigned policy_fnc (which in this case is gsp.adversarial_search_method), and then
+        return the result of self.policy_fnc
+        Inputs:
+          - decoded_state is a 12-tuple of ordered pairs. For example:
+          (
+            (c1,r1),(c2,r2),(c3,r3),(c4,r4),(c5, r5),(c6,r6),
+            (c7,r7),(c8,r8),(c9,r9),(c10,r10),(c12,r12),(c12,r12),
+          )
+        Outputs:
+          - policy returns a tuple (action, value), where action is an action tuple
+          of the form (relative_idx, encoded_position), and value is a value.
+        NOTE: While value is not used by the game simulator, you may wish to use this value
+          when implementing your policy_fnc. The game simulator and the tests only call
+          policy (which wraps your policy_fnc), so you are free to define the inputs for policy_fnc.
+        """
+        encoded_state_tup = tuple( self.b.encode_single_pos(s) for s in decode_state )
+        # state_tup = tuple((encoded_state_tup, self.player_idx))
+        state_tup = (encoded_state_tup, self.player_idx)
+        
+        # val_a, val_b, val_c = (1, 2, 3)
+        # return self.policy_fnc(state_tup, val_a, val_b, val_c)
+        
+        #Define my own parameters for the policy function
+        # return self.policy_fnc(state_tup, self.search_depth)
+        # action, value = self.policy_fnc(state_tup, self.search_depth)
+        # return action, value
+        
+         ## The code below was added with LLM Tool (ChatGPT) assistance
+         # Call adversarial search method - it should return (action, value)
+         
+        result = self.policy_fnc(state_tup, self.search_depth, None, None)
+        
+        print(f"[DEBUG] Player {self.player_idx}, result: {result}")
+        
+        ## During debugging, added the following code with LLM Tool assistance (ChatGPT)
+        # # Ensure alwasy return a tuple (action, value), not None
+        # if result is None:
+        #     # Generate fallback action
+        #     valid_actions = self.gsp.get_actions(state_tup)
+        #     if valid_actions:
+        #         action = list(valid_actions)[0]
+        #         return action, 0
+        #     else:
+        #         raise ValueError("No valid actions available")
+        
+        # action, value = result
+        # return action, value
+         
+        if result is None or not isinstance(result, tuple) or len(result) != 2:
+            print(f"[DEBUG] WARNING: policy_fnc returned invalid result for Player {self.player_idx}")
+            valid_actions = self.gsp.generate_valid_actions(self.player_idx)
+            if valid_actions:
+                action = random.choice(list(valid_actions))
+                return action, 0
+            else:
+                raise ValueError("No valid actions available")
+                
+        action, value = result
+        return action, value  
+        ## End of LLM suggested code
+         
+        # result = self.policy_fnc(state_tup, self.search_depth, None, None)
+        
+        # # Ensure we return just (action, value) not the full path
+        # if isinstance(result, tuple) and len(result) == 2:
+        #     action, value = result
+        #     # If action is a path, extract the first action
+        #     if isinstance(action, list) and len(action) > 0 and isinstance(action[0], tuple):
+        #         # Extract the action from the first state-action pair
+        #         first_state, first_action = action[0]
+        #         return first_action, value
+        #     return action, value
+        # else:
+        #     # Fallback: return first valid action
+        #     valid_actions = self.gsp.get_actions(state_tup)
+        #     if valid_actions:
+        #         action = list(valid_actions)[0]
+        #         return action, 0
+        # return None, 0
+    
+## End of LLM suggested code
+
+# # Define a new Player following Online Test cases 
+# class AlphaBetaPlayer(AdversarialSearchPlayer):
+#     def __init__(self, gsp, player_idx, search_depth=4):
+#         super().__init__(gsp, player_idx, search_depth)
+        
+#         self.policy_fnc = gsp.alpha_beta_search_method
+        
+    
+# Below is a random player  for testing. 
+class RandomPlayer(Player):
+    def __init__(self, gsp, player_idx):
+        super().__init__(None)
+        self.gsp = gsp
+        self.b = BoardState()
+        self.player_idx = player_idx
+
+    def policy(self, decode_state):
+        """
+        Chooses a random valid action for testing.
+        """
+        encoded_state_tup = tuple(self.b.encode_single_pos(s) for s in decode_state)
+        state_tup = (encoded_state_tup, self.player_idx)
+
+        valid_actions = self.gsp.get_actions(state_tup)
+        # valid_actions = self.gsp.generate_valid_actions(self.player_idx)
+        if not valid_actions:
+            print(f"[DEBUG] No valid actions for player {self.player_idx}, state={state_tup}")
+            return None, 0
+            # raise ValueError(f"No valid actions for player {self.player_idx}")
+
+        action = random.choice(list(valid_actions))
+        value = 0  # random player doesn't evaluate states
+        
+        print(f"[DEBUG] RandomPlayer {self.player_idx} picked {action}")
+        return action, value
+
+    # def random_policy(self, decode_state):
+    #     """
+    #     A simple random policy for testing purposes.
+    #     """
+    #     ## The code below Copied from the above AdversarialSearchPlayer.policy function
+    #     encoded_state_tup = tuple( self.b.encode_single_pos(s) for s in decode_state )
+    #     # state_tup = tuple((encoded_state_tup, self.player_idx))
+    #     state_tup = (encoded_state_tup, self.player_idx)
+        
+    #     # Generate valid actions
+    #     ## LLM Tool -Copilot suggested these lines of code below with minor modifications
+    #     valid_actions = self.gsp.generate_valid_actions(self.player_idx)
+    #     print(f"[DEBUG] Player {self.player_idx}, valid_actions: {valid_actions}")
+        
+    #     if not valid_actions:
+    #         print(f"[DEBUG] No valid actions for player {self.player_idx}, state={state_tup}")
+    #         return None, 0
+    #         # raise ValueError("No valid actions available.")
+        
+    #     ## End of LLM suggested code
+    #     # Select a random action using Random module
+    #     action = random.choice(list(valid_actions))
+    #     value = 0 
+        
+    #     print("DEBUG: Final_actions =", action)      
+    #     return action, value
+           
+# #Define PassiveBallPlayer class for testing
+# class PassiveBallPlayer(Player):
+#     def __init__(self, gsp, player_idx):
+#         super().__init__(self.passive_ball_policy)
+#         self.gsp = gsp
+#         self.b = BoardState()
+#         self.player_idx = player_idx
+
+#     def passive_ball_policy(self, decode_state):
+#         ## The code below Copied from the above AdversarialSearchPlayer.policy function
+#         encoded_state_tup = tuple( self.b.encode_single_pos(s) for s in decode_state )
+#         state_tup = tuple((encoded_state_tup, self.player_idx))
+        
+#         ## The code below was added with prompt assistance of Github Copilot(AI too
+#         # Generate valid actions
+#         valid_actions = self.gsp.generate_valid_actions(state_tup)
+#         ball_actions = [action for action in valid_actions if action[0] == 5]
+        
+#         if ball_actions:
+#             # Select the first valid ball action
+#             action = ball_actions[0]
+#             value = 0 
+#             return action, value
+#         elif valid_actions:
+#             # If no ball actions, select the first valid action
+#             action = next(iter(valid_actions))
+#             value = 0 
+#             return action, value
+        
+#         return None, 0
+    
+ 
+    
+# Below is the class for PassivePlayer
+class PassivePlayer(Player):
+    """
+      simply moves their ball around without moving any of their block pieces(README instructions)
+    """
+    def __init__(self, gsp, player_idx):
+        super().__init__(None)
+        self.gsp = gsp
+        self.b = BoardState()
+        self.player_idx = player_idx
+
+    def policy(self, decode_state):
+        """
+        A simple passive policy that always selects the first valid action.
+        """
+        ## The code below Copied from the above AdversarialSearchPlayer.policy function
+        encoded_state_tup = tuple( self.b.encode_single_pos(s) for s in decode_state )
+        state_tup = (encoded_state_tup, self.player_idx)
+        
+        # Generate valid actions
+        valid_actions = self.gsp.get_actions(state_tup)
+
+        # valid_actions = self.b.generate_valid_actions(self.player_idx)
+        if not valid_actions:
+            print(f"[DEBUG] PassivePlayer {self.player_idx} found no valid actions, state={state_tup}")
+            return None, 0
+        
+        ball_actions = [action for action in valid_actions if action[0] == 5]
+        
+        ## The code below was added with prompt assistance of Github Copilot(AI tool)
+        if ball_actions:
+            # Select the first valid ball action
+            action = ball_actions[0]
+            value = 0 
+            return action, value
+
+        # If no ball actions, select the first valid action
+        action = next(iter(valid_actions))
+        value = 0 
+        return action, value
+        

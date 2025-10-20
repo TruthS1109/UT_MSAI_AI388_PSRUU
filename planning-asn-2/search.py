@@ -113,18 +113,42 @@ class GameStateProblem(Problem):
         new_state_list = list(s)
         new_state_list[offset_idx + k] = v
         
-        #switht to next player
+        #switch to next player
         next_player = (p + 1) % 2
         
         return (tuple(new_state_list), next_player)
+    # return tuple((tuple( s[i] if i != offset_idx + k else v for i in range(len(s))), (p + 1) % 2))
+    
+    ## TODO: Implement your search algorithm(s) here as methods of the GameStateProblem.
+    ##       You are free to specify parameters that your method may require.
+    ##       However, you must ensure that your method returns a list of (state, action) pairs, where
+    ##       the first state and action in the list correspond to the initial state and action taken from
+    ##       the initial state, and the last (s,a) pair has s as a goal state, and a=None, and the intermediate
+    ##       (s,a) pairs correspond to the sequence of states and actions taken from the initial to goal state.
+    ##
+    ## NOTE: Here is an example of the format:
+    ##       [(s1, a1),(s2, a2), (s3, a3), ..., (sN, aN)] where
+    ##          sN is an element of self.goal_state_set
+    ##          aN is None
+    ##          All sK for K=1...N are in the form (encoded_state, player_idx), where encoded_state is a tuple of 12 integers,
+    ##              effectively encoded_state is the result of tuple(BoardState.state)
+    ##          All aK for K=1...N are in the form (int, int)
+    ##
+    ## NOTE: The format of state is a tuple: (encoded_state, player_idx), where encoded_state is a tuple of 12 integers
+    ##       (mirroring the contents of BoardState.state), and player_idx is 0 or 1, indicating the player that is
+    ##       moving in this state.
+    ##       The format of action is a tuple: (relative_idx, position), where relative_idx the relative index into encoded_state
+    ##       with respect to player_idx, and position is the encoded position where the piece should move to with this action.
+    ## NOTE: self.get_actions will obtain the current actions available in current game state.
+    ## NOTE: self.execute acts like the transition function.
+    ## NOTE: Remember to set self.search_alg_fnc in set_search_alg above.
+    ## 
+   
         
     def bfs_search_algorithm(self):
         """
         Breadth-First Search algorithm to find optimal path from initial state to goal state.
-        
-        Returns:
-            A list of (state, action) pairs representing the optimal path from initial to goal state.
-            Format: [(s1, a1), (s2, a2), ..., (sN, None)] where sN is a goal state.
+
         """
         
         #If initial state is already a goal state   
@@ -137,6 +161,7 @@ class GameStateProblem(Problem):
         
         came_from = {self.initial_state: (None, None)}  # state -> (parent_state, action)
         
+        ## LLM tool (ChatGPT) suggested these lines of code below
         while not frontier.empty():
             current_state = frontier.get()
             
@@ -165,10 +190,11 @@ class GameStateProblem(Problem):
                         # return path
                 frontier.put(next_state)
                 
+        ## End of LLM suggested code        
         return []
 
         
-        # return tuple((tuple( s[i] if i != offset_idx + k else v for i in range(len(s))), (p + 1) % 2))
+        
     def dfs_search_algorithm(self):
         """
         Depth-First Search algorithm to find a path from initial state to goal state.
@@ -179,6 +205,7 @@ class GameStateProblem(Problem):
         stack = [self.initial_state]
         came_from = {self.initial_state: (None, None)}
 
+        ## LLM tool (ChatGPT) suggested the lines of code below
         while stack:
             current_state = stack.pop()
 
@@ -191,9 +218,12 @@ class GameStateProblem(Problem):
                 if next_state not in came_from:  # Not visited
                     came_from[next_state] = (current_state, action)
                     stack.append(next_state)
+        
+        
 
         return []
 
+    ## LLM tool (ChatGPT) suggested the implementation for this function below
     def reconstruct_path(self, came_from, goal_state):
         """
         Reconstruct the path from initial state to goal state using the came_from dictionary.
@@ -222,31 +252,7 @@ class GameStateProblem(Problem):
         return path
     
     
-    ## TODO: Implement your search algorithm(s) here as methods of the GameStateProblem.
-    ##       You are free to specify parameters that your method may require.
-    ##       However, you must ensure that your method returns a list of (state, action) pairs, where
-    ##       the first state and action in the list correspond to the initial state and action taken from
-    ##       the initial state, and the last (s,a) pair has s as a goal state, and a=None, and the intermediate
-    ##       (s,a) pairs correspond to the sequence of states and actions taken from the initial to goal state.
-    ##
-    ## NOTE: Here is an example of the format:
-    ##       [(s1, a1),(s2, a2), (s3, a3), ..., (sN, aN)] where
-    ##          sN is an element of self.goal_state_set
-    ##          aN is None
-    ##          All sK for K=1...N are in the form (encoded_state, player_idx), where encoded_state is a tuple of 12 integers,
-    ##              effectively encoded_state is the result of tuple(BoardState.state)
-    ##          All aK for K=1...N are in the form (int, int)
-    ##
-    ## NOTE: The format of state is a tuple: (encoded_state, player_idx), where encoded_state is a tuple of 12 integers
-    ##       (mirroring the contents of BoardState.state), and player_idx is 0 or 1, indicating the player that is
-    ##       moving in this state.
-    ##       The format of action is a tuple: (relative_idx, position), where relative_idx the relative index into encoded_state
-    ##       with respect to player_idx, and position is the encoded position where the piece should move to with this action.
-    ## NOTE: self.get_actions will obtain the current actions available in current game state.
-    ## NOTE: self.execute acts like the transition function.
-    ## NOTE: Remember to set self.search_alg_fnc in set_search_alg above.
-    ## 
-   
+
     # Alias the search function for easy access
     def search(self):
         """Main search method that uses the selected algorithm."""
