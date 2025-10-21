@@ -150,6 +150,7 @@ class BoardState:
         white_block_positions = [int(self.state[i]) for i in range(0, 5)]
         black_block_positions = [int(self.state[i]) for i in range(6, 11)]
         
+        ## This check rule below was added with prompt assistance of Github Copilot(AI tool)
         # Check no duplicate block positions within same player and across both players
         # Combined block set must have length 10
         combined_blocks = white_block_positions + black_block_positions
@@ -239,7 +240,6 @@ class Rules:
         valid_moves = {m for m in candidate_moves if m not in block_positions}
         return valid_moves
 
-        # return set(Rules.get_knight_moves(current_pos, board_state))
 
     @staticmethod
     def single_ball_actions(board_state, player_idx):
@@ -266,8 +266,6 @@ class Rules:
             
         start_pos = int(board_state.state[ball_idx])
 
-        # Map block positions to piece indices for quick lookup
-        # pos_to_piece_idx = {int(board_state.state[i]): i for i in piece_indices}
 
         # BFS over block positions (nodes = positions of own blocks)
         reachable = set()
@@ -275,7 +273,7 @@ class Rules:
         queue = [start_pos]
         visited.add(start_pos)
         
-        ## The following logic is inspired by LLM tool (ChatGPT) assistance
+        ## The following logic is inspired by LLM tool (ChatGPT) assistance with minor modifications
 
         while queue:
             current = queue.pop(0)
@@ -293,22 +291,10 @@ class Rules:
 
         # reachable contains all friendly block positions reachable via any sequence of valid passes
         return reachable
+       
+       ## End of LLM suggested code
 
-        # current_ball_pos = board_state.state[ball_idx]
-        # valid_moves = set()
-        
-        # #The ball can move to any position occupied by its own pieces
-        # for idx in piece_indices:
-        #     target_pos = board_state.state[idx]
-            
-        #     if target_pos == current_ball_pos:
-        #         continue  # Skip if it's the same position as the ball
-            
-            
-        #     if Rules.is_valid_ball_path(board_state,current_ball_pos, target_pos):
-        #         valid_moves.add(target_pos)
-                
-        # return valid_moves
+       
         
     @staticmethod
     def is_valid_ball_path(board_state, start_pos, end_pos):
@@ -376,9 +362,6 @@ class GameSimulator:
         # MAX_ROUNDS = 200
         # while not self.game_state.is_termination_state() and self.current_round < MAX_ROUNDS:
         while not self.game_state.is_termination_state() :
-        # while not self.game_state.is_termination_state():
-            
-            
 
             ## Determine the round number, and the player who needs to move
             self.current_round += 1
@@ -432,7 +415,7 @@ class GameSimulator:
         offset_idx = player_idx * 6 ## Either 0 or 6
         
         # Get valid moves for all pieces
-        #The following part in this function was completed with support of LLM tool(ChatGPT) assistance
+        #The following part in this function was completed with support of LLM tool(ChatGPT) assistance with modifications 
         for rel_idx in range(5):    
             piece_idx = offset_idx + rel_idx
             piece_moves = Rules.single_piece_actions(self.game_state, piece_idx)
@@ -449,6 +432,7 @@ class GameSimulator:
         valid_actions = {action for action in valid_actions 
                          if action[1] != current_positions[action[0]]}
         
+        ## End of LLM suggested code 
         return valid_actions
 
     def validate_action(self, action: tuple, player_idx: int):
@@ -491,18 +475,7 @@ class GameSimulator:
         
         return True
         
-        # #Check is the position is already occupied
-        # if pos in self.game_state.state:
-        #     #Allow moving the ball to a position occupied by its own pieces
-        #     if rel_idx == 5: # Moving the ball
-        #         offset_idx = player_idx * 6
-        #         friendly_pieces = [self.game_state.state[i] for i in range(offset_idx, offset_idx + 5)]
-        #         if pos not in friendly_pieces:
-        #             raise ValueError("Ball can only be moved to a position occupied by its own pieces.")
-        #     else: # Moving a block piece
-        #         raise ValueError("Position is already occupied by another piece.")
 
-   
     def update(self, action: tuple, player_idx: int):
         """
         Uses a validated action and updates the game board state
@@ -512,6 +485,7 @@ class GameSimulator:
         self.game_state.update(offset_idx + idx, pos)
 
 ##==========================================================================================
+## Below are new classes and functions added for Assignment 3
 ##==========================================================================================
 ## Added Player Class below for Assignment 3 (From README instructions)
 class Player:
@@ -587,14 +561,6 @@ class AdversarialSearchPlayer(Player):
         action, value = result
         return action, value  
         ## End of LLM suggested code
-
-# # Define a new Player following Online Test cases 
-# class AlphaBetaPlayer(AdversarialSearchPlayer):
-#     def __init__(self, gsp, player_idx, search_depth=4):
-#         super().__init__(gsp, player_idx, search_depth)
-        
-#         self.policy_fnc = gsp.alpha_beta_search_method
-        
     
 # Below is a random player  for testing. 
 class RandomPlayer(Player):
@@ -625,7 +591,7 @@ class RandomPlayer(Player):
         print(f"[DEBUG] RandomPlayer {self.player_idx} picked {action}")
         return action, value
     
-# Below is the class for PassivePlayer
+# Below is the class for PassivePlayer. -- for Local testing 
 class PassivePlayer(Player):
     """
       simply moves their ball around without moving any of their block pieces(README instructions)

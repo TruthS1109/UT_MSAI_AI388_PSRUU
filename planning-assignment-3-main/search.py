@@ -159,6 +159,8 @@ class GameStateProblem(Problem):
     ## 
     
     ##=============================================================================================
+    ## Below are functions defined to support adversarial search for assignment 3
+    ##=============================================================================================
     # Define is_goal method for adversarial search -- assignment 3
     def is_goal(self, state):
         
@@ -181,28 +183,11 @@ class GameStateProblem(Problem):
         # board.decode_state = board.make_state()
         
         # return board.is_termination_state()
-        
-    # ## Define getsuccessors method for adversarial search
-    # def get_successors(self, state, action):
-        
-    #     #Given state and player, return the next state and next player
-    #     cur_encoded_state, current_player = state
-        
-    #     new_encoded_state = self.execute(state, action)
-        
-    #     #Change to next player(for 2 player game)
-    #     next_player = (current_player + 1) % 2
-        
-    #     return (new_encoded_state, next_player)
 
     
     # Define the evaluation function for adversarial search
     def evaluate_state(self, state, player_idx):
         ## This part was completed with prompt assistance of Github Copilot(AI tool)
-        # s, current_player = state
-        # board = BoardState()
-        # board.state = np.array(s)
-        # board.decode_state = board.make_state()
         s, current_player = state
         self.board.state = np.array(s)
         board = self.board
@@ -232,6 +217,8 @@ class GameStateProblem(Problem):
         ## The code below was completed with prompt assistance of Github Copilot(AI tool)
         action_advantage = actions_player_0 - actions_player_1
         
+        ##--------------------------------------------------------------
+        ## Alternative evaluation methods with simpler heuristic
         # # Progress evaluation based on distance to goal
         # if player_idx == 0:   # WHITE (to reach row 7; positions 50-55)
         #     ball_position = board.decode_single_pos(s[5])  # furthest ball for WHITE
@@ -239,10 +226,11 @@ class GameStateProblem(Problem):
         # else:  # BLACK (to reach row 0; positions 0-5)
         #     ball_position = board.decode_single_pos(s[11])  # furthest ball for BLACK
         #     progress = 7 - ball_position[1]  # row number from bottom
-            
-            
         # # Combine evaluations
         # value = action_advantage * 1.5 + progress * 5  ##To try with different weights
+        ##--------------------------------------------------------------    
+            
+
          ###### 
          ##Debug with support from LLM tool (ChatGPT) suggestions
          ## Try with different evalation methods to consider blocking opponent's ball
@@ -263,25 +251,6 @@ class GameStateProblem(Problem):
         
         return value
 
-        
-        # #Evaluation based on blocking advantage
-        # if player_idx == 0:
-        #     opponent_ball_idx = 6
-        # else:
-        #     opponent_ball_idx = 0
-        # opponent_ball_pos = board.state[opponent_ball_idx]
-        # # opponent_ball_moves = board.get_valid_knight_moves(opponent_ball_pos)
-        # # if len(opponent_ball_moves) == 0:
-        # #     return 10000  # High positive value for blocking opponent's ball
-        # # else:
-        # #     return -100 * len(opponent_ball_moves) + (actions_player_0 - actions_player_1)
-        
-        # my_blocking_score = sum(abs(board.state[i] - opponent_ball_pos) <= 2 for i in range(player_idx * 6, player_idx * 6 + 6) )
-        
-        # value = (1.5 * my_blocking_score) + (actions_player_0 - actions_player_1) * 2
-        # # value = 2.0 * (actions_player_0 - actions_player_1) + 1.5 * my_blocking_score
-        
-        # return value
 
     ## Define order actions by heuristic value for alpha-beta pruning
     def order_actions(self, state, actions, player_idx):
@@ -301,6 +270,7 @@ class GameStateProblem(Problem):
         
         # ordered_actions = [action for action, v in action_values]
         
+        ## The logic below was updated with LLM tool (ChatGPT) suggestions
         # Max player: largest first
         # Min player: smallest first
         if player_idx == 0:
@@ -328,34 +298,17 @@ class GameStateProblem(Problem):
         
         if not actions:
             return None, self.evaluate_state(state_tup, initial_player)
-        
-        #Order actions for alpha-beta pruning ---  more effective pruning
-        actions = self.order_actions(state_tup, actions, initial_player)  #or actions 
-        
-        ##During Testing and Debugging
-        ## The code below was inpired with LLM Tool (ChatGPT) suggestions with modifications
+
         alpha = -math.inf
         beta = math.inf
         best_action = None
         best_value = -math.inf
         
-        # # # best_action, best_value = self.MiniMaxValue_noAlphaBeta(initial_state, initial_player, search_depth)
-        # # best_action , best_value = self.MiniMaxValue_AlphaBeta(state_tup, initial_player, search_depth)
-        
-        
-        # ## the 2 lines below wer added with prompt assistance of Github Copilot(AI tool)
-        # #If Minimax returns None, use fallback
-        # if best_action is None and actions :
-        #     #Fallback: select the first valid action 
-        #     best_action = list(actions)[0]
-        #     best_value = self.evaluate_state(state_tup, initial_player)
-        
-        # ## Commented for online grading    
-        # # print(f"[DEBUG] Player {initial_player}, returning {best_action, best_value}")
-            
-        # return best_action, best_value
-
-        ## The code below was completed with prompt assistance of Github Copilot(AI tool) Also with ChatGPT suggestions for modifications
+        #Order actions for alpha-beta pruning ---  more effective pruning
+        actions = self.order_actions(state_tup, actions, initial_player)  #or actions 
+        ##During Testing and Debugging
+        ## The code below was completed with prompt assistance of Github Copilot(AI tool) 
+        ## Also with ChatGPT suggestions for modifications
         for action in actions:
             next_state = self.execute(state_tup, action)
             value = self.MinValue_AlphaBeta(next_state, initial_player , search_depth - 1, alpha, beta)
@@ -399,6 +352,7 @@ class GameStateProblem(Problem):
             
             if alpha >= beta:
                 break #Beta cut-off
+        ## End of LLM suggested code
            
         return value
     
@@ -429,343 +383,102 @@ class GameStateProblem(Problem):
             beta = min(beta, value)
             if beta <= alpha:
                 break #Alpha cut-off
+        ## End of LLM suggested code
             
         return value
     
-    # ## Adding adversiarial search algorithm (Minimax) for assignment 3
-    # def adversarial_search_method(self, state_tup, search_depth=4, val_b=None, val_c=None):
-    #     """
-    #     Adversarial Search algorithm for assignment 3 (minimax + alpha-beta pruning).
-    #     """
+    # ###===========================================================
+    # ### Debugging with different minimax and alpha-beta pruning function below
+    # def MiniMaxValue_AlphaBeta(self, initial_state, max_player, search_depth):
         
-    #     if state_tup is None:
-    #         state_tup = self.initial_state
-            
-    #     # initial_state = state_tup
-    #     s, initial_player = state_tup
-        
-    #     #Get all actions for current player
-    #     actions = self.get_actions(state_tup)
-        
-    #     if not actions:
-    #         return None, self.evaluate_state(state_tup, initial_player)
-        
-
-    #     # ##During Testing and Debugging
-    #     # ## The code below was inpired with LLM Tool (ChatGPT) suggestions with modifications
-    #     # alpha = -math.inf
-    #     # beta = math.inf
-    #     # best_action = None
-    #     # best_value = -math.inf
-        
-        
-    #     # for action in actions:
-    #     #     next_state = self.execute(state_tup, action)
-    #     #     value = self.MiniMaxValue_AlphaBeta(next_state, initial_player , search_depth - 1, alpha, beta)
-            
-    #     #     if value > best_value:
-    #     #         best_value = value
-    #     #         best_action = action
-    #     #     alpha = max(alpha, best_value)
-            
-    #     #     # if beta <= alpha:
-    #     #     #     break  # Beta cut-off
-            
-    #     # if best_action is None:
-    #     #     best_action = list(actions)[0]
-    #     #     best_value = self.evaluate_state(state_tup, initial_player)
-            
-    #     # return best_action, best_value
-        
-        
-        
-        
-    #     # best_action, best_value = self.MiniMaxValue_noAlphaBeta(initial_state, initial_player, search_depth)
-    #     best_action , best_value = self.MiniMaxValue_AlphaBeta(state_tup, initial_player, search_depth)
-        
-        
-    #     ## the 2 lines below wer added with prompt assistance of Github Copilot(AI tool)
-    #     #If Minimax returns None, use fallback
-    #     if best_action is None and actions :
-    #         #Fallback: select the first valid action 
-    #         best_action = list(actions)[0]
-    #         best_value = self.evaluate_state(state_tup, initial_player)
-        
-    #     ## Commented for online grading    
-    #     # print(f"[DEBUG] Player {initial_player}, returning {best_action, best_value}")
-            
-    #     return best_action, best_value
-            
-        
-    #Define the Minimax value function with or without alpha-beta pruning following the pseudocode in the lecture slides
-    #This function with alpha-beta pruning
-    # def MiniMaxValue_AlphaBeta(self, initial_state, max_player, search_depth, alpha, beta):
-        
-
-    #     state, current_player = initial_state
-        
-    #     #Termination condition or depth limit
-    #     if self.is_termination_state(initial_state) or search_depth == 0:
-    #         return self.evaluate_state(initial_state, max_player)
-        
-    #     actions = self.get_actions(initial_state)
-    #     print(f"[DEBUG][depth={search_depth}] Player={state[1]} alpha={alpha} beta={beta}")
-        
-    #     if not actions:
-    #         return self.evaluate_state(initial_state, max_player)
-        
-    #     if current_player == max_player:  # Maximizing player
-            
-    #         return self.MaxValue_AlphaBeta(initial_state, max_player, search_depth, alpha, beta)
-    #     else:  # Minimizing player
-    #         return self.MinValue_AlphaBeta(initial_state, max_player, search_depth, alpha, beta)
-
-
-        
-        # #Initialize the best action and value for the initial state
-        # if max_player == 0:  # Maximizing player
-        #     best_value = -math.inf
-        # else:   # Minimizing player
-        #     best_value = math.inf
-            
-        # actions = self.get_actions(initial_state)
-        # if not actions:
-        #     return (None, self.evaluate_state(initial_state, max_player))
-        
-        # actions = self.order_actions(initial_state, actions, max_player) or actions 
-        
-        # ## The code below was completed with prompt assistance of Github Copilot(AI tool)
-        # for action in actions:
-        #     next_state = self.execute(initial_state, action)
-        #     # value = self.MinValue(next_state, (initial_player + 1) % 2, search_depth - 1, alpha, beta)
-        #         value = self.MinValue(next_state, max_player , search_depth - 1, alpha, beta)
-            
-        #     if max_player == 0:  # Maximizing player
-        #         if value > best_value:
-        #             best_value = value
-        #             best_action = action
-        #         alpha = max(alpha, best_value)
-        #     else:  # Minimizing player
-        #         if value < best_value:
-        #             best_value = value
-        #             best_action = action
-        #         beta = min(beta, best_value)
-            
-        #     # Alpha-Beta Pruning
-        #     if beta <= alpha:
-        #         break
-            
-        # return best_action, best_value  
-    
-    
-    # def MiniMaxValue_AlphaBeta(self, state, max_player, depth, alpha=-math.inf, beta=math.inf):
-    #     """
-    #     Wrapper for alpha-beta minimax. Returns the best action and its value.
-    #     """
-    #     # Termination check or depth limit
-    #     if self.is_termination_state(state) or depth == 0:
-    #         return None, self.evaluate_state(state, max_player)
-        
-    #     actions = self.get_actions(state)
-    #     if not actions:
-    #         return None, self.evaluate_state(state, max_player)
-        
+    #     #Intial values 
+    #     alpha = -math.inf
+    #     beta = math.inf
     #     best_action = None
-
-    #     current_player = state[1]
-    #     if current_player == max_player:
+    #     #Initialize the best action and value for the initial state
+    #     if max_player == 0:  # Maximizing player
     #         best_value = -math.inf
-    #         for action in actions:
-    #             next_state = self.execute(state, action)
-    #             value = self.MinValue_AlphaBeta(next_state, max_player, depth-1, alpha, beta)
+    #     else:   # Minimizing player
+    #         best_value = math.inf
+            
+    #     actions = self.get_actions(initial_state)
+    #     if not actions:
+    #         return (None, self.evaluate_state(initial_state, max_player))
+        
+    #     actions = self.order_actions(initial_state, actions, max_player) #or actions 
+        
+    #     ## The code below was completed with prompt assistance of Github Copilot(AI tool)
+    #     for action in actions:
+    #         next_state = self.execute(initial_state, action)
+    #         # value = self.MinValue(next_state, (initial_player + 1) % 2, search_depth - 1, alpha, beta)
+    #         value = self.MinValue(next_state, max_player , search_depth - 1, alpha, beta)
+            
+    #         if max_player == 0:  # Maximizing player
     #             if value > best_value:
     #                 best_value = value
     #                 best_action = action
     #             alpha = max(alpha, best_value)
-    #             if alpha >= beta:
-    #                 break  # Beta cut-off
-    #     else:
-    #         best_value = math.inf
-    #         for action in actions:
-    #             next_state = self.execute(state, action)
-    #             value = self.MaxValue_AlphaBeta(next_state, max_player, depth-1, alpha, beta)
+    #         else:  # Minimizing player
     #             if value < best_value:
     #                 best_value = value
     #                 best_action = action
     #             beta = min(beta, best_value)
-    #             if beta <= alpha:
-    #                 break  # Alpha cut-off
-
+            
+    #         # Alpha-Beta Pruning
+    #         if beta <= alpha:
+    #             break
+            
     #     return best_action, best_value
     
     # ## Define the MaxValue function for minimax with alpha-betapruning based on the pseudocode in the lecture slides
-    # def MaxValue_AlphaBeta (self, state, player_idx, depth, alpha, beta):
-
+    # def MaxValue (self, state, player_idx, depth, alpha, beta):
+    #     if self.is_termination_state(state) or depth == 0:
+    #         return self.evaluate_state(state, player_idx)
+        
     #     value = -math.inf
     #     actions = self.get_actions(state)
-    #     # if not actions:
-    #     #     return self.evaluate_state(state, player_idx)        
+    #     if not actions:
+    #         return self.evaluate_state(state, player_idx)
+        
+    #     actions = self.order_actions(state, actions, player_idx) or actions
+        
     #     ## The code below was completed with prompt assistance of Github Copilot(AI tool)
     #     for action in actions:
     #         next_state = self.execute(state, action)
-    #         value = max(value, 
-    #                     self.MinValue_AlphaBeta(next_state, player_idx, depth - 1, alpha, beta)
-    #                     )
+    #         value = max(value, self.MinValue(next_state, (player_idx + 1) % 2, depth - 1, alpha, beta))
     #         alpha = max(alpha, value)
             
     #         if alpha >= beta:
-    #             break #Beta cut-off
+    #             break
            
+    
     #     return value
     
 
     # ## Define the MinValue function for minimax with alpha-beta pruning based on the pseudocode in the lecture slides    
-    # def MinValue_AlphaBeta(self, state, player_idx, depth, alpha, beta):        
-        
-    #     value = math.inf
-    #     actions = self.get_actions(state)
-    #     # if not actions:
-    #     #     return self.evaluate_state(state, player_idx)
-        
-    #     ## The code below was completed with prompt assistance of Github Copilot(AI tool)
-    #     for action in actions:
-    #         next_state = self.execute(state, action)
-    #         value = min(value, 
-    #                     self.MaxValue_AlphaBeta(next_state, player_idx, depth - 1, alpha, beta)
-    #                     )
-    #         beta = min(beta, value)
-    #         if beta <= alpha:
-    #             break #Alpha cut-off
-            
-    #     return value
-    
-    
-    
-    
-    
-    ###################============================================================
-    ### Debugging with different implementations of minimax value function below
-    def MiniMaxValue_AlphaBeta(self, initial_state, max_player, search_depth):
-        
-        #Intial values 
-        alpha = -math.inf
-        beta = math.inf
-        best_action = None
-        #Initialize the best action and value for the initial state
-        if max_player == 0:  # Maximizing player
-            best_value = -math.inf
-        else:   # Minimizing player
-            best_value = math.inf
-            
-        actions = self.get_actions(initial_state)
-        if not actions:
-            return (None, self.evaluate_state(initial_state, max_player))
-        
-        actions = self.order_actions(initial_state, actions, max_player) or actions 
-        
-        ## The code below was completed with prompt assistance of Github Copilot(AI tool)
-        for action in actions:
-            next_state = self.execute(initial_state, action)
-            # value = self.MinValue(next_state, (initial_player + 1) % 2, search_depth - 1, alpha, beta)
-            value = self.MinValue(next_state, max_player , search_depth - 1, alpha, beta)
-            
-            if max_player == 0:  # Maximizing player
-                if value > best_value:
-                    best_value = value
-                    best_action = action
-                alpha = max(alpha, best_value)
-            else:  # Minimizing player
-                if value < best_value:
-                    best_value = value
-                    best_action = action
-                beta = min(beta, best_value)
-            
-            # Alpha-Beta Pruning
-            if beta <= alpha:
-                break
-            
-        return best_action, best_value
-    
-    ## Define the MaxValue function for minimax with alpha-betapruning based on the pseudocode in the lecture slides
-    def MaxValue (self, state, player_idx, depth, alpha, beta):
-        if self.is_termination_state(state) or depth == 0:
-            return self.evaluate_state(state, player_idx)
-        
-        value = -math.inf
-        actions = self.get_actions(state)
-        if not actions:
-            return self.evaluate_state(state, player_idx)
-        
-        actions = self.order_actions(state, actions, player_idx) or actions
-        
-        ## The code below was completed with prompt assistance of Github Copilot(AI tool)
-        for action in actions:
-            next_state = self.execute(state, action)
-            value = max(value, self.MinValue(next_state, (player_idx + 1) % 2, depth - 1, alpha, beta))
-            alpha = max(alpha, value)
-            
-            if alpha >= beta:
-                break
-           
-    
-        return value
-    
-
-    ## Define the MinValue function for minimax with alpha-beta pruning based on the pseudocode in the lecture slides    
-    def MinValue(self, state, player_idx, depth, alpha, beta):
-        if self.is_termination_state(state) or depth == 0:
-            return self.evaluate_state(state, player_idx)
-        
-        value = math.inf
-        actions = self.get_actions(state)
-        if not actions:
-            return self.evaluate_state(state, player_idx)
-        
-        # actions = self.order_actions(state, actions, player_idx) or actions
-        
-        ## The code below was completed with prompt assistance of Github Copilot(AI tool)
-        for action in actions:
-            next_state = self.execute(state, action)
-            value = min(value, self.MaxValue(next_state, (player_idx + 1) % 2, depth - 1, alpha, beta))
-            beta = min(beta, value)
-            if beta <= alpha:
-                break
-           
-        
-        return value
-    
-    # #define the MinValue function for minimax without alpha-beta pruning based on the pseudocode in the lecture slides    
-    # def MinValue_NoAlphaBeta(self, state, max_player, depth):
+    # def MinValue(self, state, player_idx, depth, alpha, beta):
     #     if self.is_termination_state(state) or depth == 0:
-    #         return self.evaluate_state(state, max_player)
+    #         return self.evaluate_state(state, player_idx)
         
     #     value = math.inf
     #     actions = self.get_actions(state)
     #     if not actions:
-    #         return self.evaluate_state(state, max_player)
+    #         return self.evaluate_state(state, player_idx)
         
-    #     # actions = self.order_actions(state, actions, max_player) or actions
+    #     # actions = self.order_actions(state, actions, player_idx) or actions
         
     #     ## The code below was completed with prompt assistance of Github Copilot(AI tool)
     #     for action in actions:
     #         next_state = self.execute(state, action)
-    #         value = min(value, self.MaxValue_noAlphaBeta(next_state, (max_player + 1) % 2, depth - 1))
+    #         value = min(value, self.MaxValue(next_state, (player_idx + 1) % 2, depth - 1, alpha, beta))
+    #         beta = min(beta, value)
+    #         if beta <= alpha:
+    #             break
+           
         
-        # return value
+    #     return value
     
-    # #Define the alpha-beta search method as a wrapper for minimax with alpha-beta pruning    
-    # def alpha_beta_search_method(self, state_tup, player_idx, search_depth=4):
-        
-    #     intial_state = state_tup
-    #     state = (intial_state, player_idx)
-
-        
-    #     best_action = None
-    #     best_value = -math.inf
-        
-    #     best_action, best_value = self.MiniMaxValue_AlphaBeta(state, player_idx, search_depth)
-        
-    #     return best_action, best_value        
+       
 
     ## LLM tool (ChatGPT) suggested the implementation for this function below
     def reconstruct_path(self, came_from, goal_state):
