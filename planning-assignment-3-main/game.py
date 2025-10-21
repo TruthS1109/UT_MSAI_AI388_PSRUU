@@ -71,19 +71,34 @@ class BoardState:
         white_ball_pos = self.decode_single_pos(self.state[5])
         black_ball_pos = self.decode_single_pos(self.state[11])
         
-        print(f"[DEBUG] White ball: {white_ball_pos}, Black ball: {black_ball_pos}")
+        # print(f"[DEBUG] White ball: {white_ball_pos}, Black ball: {black_ball_pos}")
         
         #check if balls are actually on the correct pieces
-        if white_ball_pos[1] >= 7:  # white_ball_on_piece :
-            print("[DEBUG] White wins!")
+        if white_ball_pos[1] >= self.N_ROWS - 1:  # white_ball_on_piece :
+            # print("[DEBUG] White wins!")
             return True
 
         if black_ball_pos[1] <= 0:  # black_ball_on_piece:
-            print("[DEBUG] Black wins!")
+            # print("[DEBUG] Black wins!")
             return True
         
         return False
     
+    #Define is_goal for Assignment 3
+    def is_goal(self, player_idx):
+        
+        if not self.is_valid():
+            return False
+        
+        white_ball_pos = self.decode_single_pos(self.state[5])
+        black_ball_pos = self.decode_single_pos(self.state[11])
+        
+        if player_idx == 0:  # White player
+            return white_ball_pos[1] >= self.N_ROWS - 1  # White wins if ball reaches top row
+        else:  # Black player
+            return black_ball_pos[1] <= 0  # Black wins if ball reaches bottom row
+        
+
     ## New function get_winner for Assignment 3
     def get_winner(self):
         """
@@ -354,10 +369,13 @@ class GameSimulator:
         Runs a game simulation
         """
         
-        print(f"DEBUG====Starting game simulation: player 0 = {type(self.players[0]).__name__}, player 1 = {type(self.players[1]).__name__}")
+        ## Commented for online grading
+        # print(f"DEBUG====Starting game simulation: player 0 = {type(self.players[0]).__name__}, player 1 = {type(self.players[1]).__name__}")
 
-        MAX_ROUNDS = 200
-        while not self.game_state.is_termination_state() and self.current_round < MAX_ROUNDS:
+        ## Adding Max Round for Debugging
+        # MAX_ROUNDS = 200
+        # while not self.game_state.is_termination_state() and self.current_round < MAX_ROUNDS:
+        while not self.game_state.is_termination_state() :
         # while not self.game_state.is_termination_state():
             
             
@@ -366,11 +384,13 @@ class GameSimulator:
             self.current_round += 1
             player_idx = self.current_round % 2
             ## For the player who needs to move, provide them with the current game state
-            print(f"DEBUG====Turn for player {player_idx} ({type(self.players[player_idx]).__name__})")
-            print("DEBUG: game_state =", self.game_state.make_state())
+            # print(f"DEBUG====Turn for player {player_idx} ({type(self.players[player_idx]).__name__})")
+            # print("DEBUG: game_state =", self.game_state.make_state())
             
             ## and then ask them to choose an action according to their policy
             action, value = self.players[player_idx].policy( self.game_state.make_state() )
+            
+            ## Commented for online grading
             print(f"Round: {self.current_round} Player: {player_idx} State: {tuple(self.game_state.state)} Action: {action} Value: {value}")
 
             if not self.validate_action(action, player_idx):
@@ -503,7 +523,7 @@ class Player:
 
 #Below is the AdversarialSearchPlayer class for Assignment 3 (From README instructions)
 class AdversarialSearchPlayer(Player):
-    def __init__(self, gsp, player_idx,search_depth=2):
+    def __init__(self, gsp, player_idx,search_depth=4):
         """
         You can customize the signature of the constructor above to suit your needs.
         In this example, in the above parameters, gsp is a GameStateProblem, and
@@ -551,24 +571,12 @@ class AdversarialSearchPlayer(Player):
          
         result = self.policy_fnc(state_tup, self.search_depth, None, None)
         
-        print(f"[DEBUG] Player {self.player_idx}, result: {result}")
+        # print(f"[DEBUG] Player {self.player_idx}, result: {result}")
         
-        ## During debugging, added the following code with LLM Tool assistance (ChatGPT)
-        # # Ensure alwasy return a tuple (action, value), not None
-        # if result is None:
-        #     # Generate fallback action
-        #     valid_actions = self.gsp.get_actions(state_tup)
-        #     if valid_actions:
-        #         action = list(valid_actions)[0]
-        #         return action, 0
-        #     else:
-        #         raise ValueError("No valid actions available")
-        
-        # action, value = result
-        # return action, value
-         
+        ## During debugging, added the following code with LLM Tool assistance (ChatGPT )
         if result is None or not isinstance(result, tuple) or len(result) != 2:
-            print(f"[DEBUG] WARNING: policy_fnc returned invalid result for Player {self.player_idx}")
+            ## Commented for online grading
+            # print(f"[DEBUG] WARNING: policy_fnc returned invalid result for Player {self.player_idx}")
             valid_actions = self.gsp.generate_valid_actions(self.player_idx)
             if valid_actions:
                 action = random.choice(list(valid_actions))
@@ -579,27 +587,6 @@ class AdversarialSearchPlayer(Player):
         action, value = result
         return action, value  
         ## End of LLM suggested code
-         
-        # result = self.policy_fnc(state_tup, self.search_depth, None, None)
-        
-        # # Ensure we return just (action, value) not the full path
-        # if isinstance(result, tuple) and len(result) == 2:
-        #     action, value = result
-        #     # If action is a path, extract the first action
-        #     if isinstance(action, list) and len(action) > 0 and isinstance(action[0], tuple):
-        #         # Extract the action from the first state-action pair
-        #         first_state, first_action = action[0]
-        #         return first_action, value
-        #     return action, value
-        # else:
-        #     # Fallback: return first valid action
-        #     valid_actions = self.gsp.get_actions(state_tup)
-        #     if valid_actions:
-        #         action = list(valid_actions)[0]
-        #         return action, 0
-        # return None, 0
-    
-## End of LLM suggested code
 
 # # Define a new Player following Online Test cases 
 # class AlphaBetaPlayer(AdversarialSearchPlayer):
@@ -622,6 +609,7 @@ class RandomPlayer(Player):
         Chooses a random valid action for testing.
         """
         encoded_state_tup = tuple(self.b.encode_single_pos(s) for s in decode_state)
+        # state_tup = tuple((encoded_state_tup, self.player_idx))
         state_tup = (encoded_state_tup, self.player_idx)
 
         valid_actions = self.gsp.get_actions(state_tup)
@@ -636,66 +624,6 @@ class RandomPlayer(Player):
         
         print(f"[DEBUG] RandomPlayer {self.player_idx} picked {action}")
         return action, value
-
-    # def random_policy(self, decode_state):
-    #     """
-    #     A simple random policy for testing purposes.
-    #     """
-    #     ## The code below Copied from the above AdversarialSearchPlayer.policy function
-    #     encoded_state_tup = tuple( self.b.encode_single_pos(s) for s in decode_state )
-    #     # state_tup = tuple((encoded_state_tup, self.player_idx))
-    #     state_tup = (encoded_state_tup, self.player_idx)
-        
-    #     # Generate valid actions
-    #     ## LLM Tool -Copilot suggested these lines of code below with minor modifications
-    #     valid_actions = self.gsp.generate_valid_actions(self.player_idx)
-    #     print(f"[DEBUG] Player {self.player_idx}, valid_actions: {valid_actions}")
-        
-    #     if not valid_actions:
-    #         print(f"[DEBUG] No valid actions for player {self.player_idx}, state={state_tup}")
-    #         return None, 0
-    #         # raise ValueError("No valid actions available.")
-        
-    #     ## End of LLM suggested code
-    #     # Select a random action using Random module
-    #     action = random.choice(list(valid_actions))
-    #     value = 0 
-        
-    #     print("DEBUG: Final_actions =", action)      
-    #     return action, value
-           
-# #Define PassiveBallPlayer class for testing
-# class PassiveBallPlayer(Player):
-#     def __init__(self, gsp, player_idx):
-#         super().__init__(self.passive_ball_policy)
-#         self.gsp = gsp
-#         self.b = BoardState()
-#         self.player_idx = player_idx
-
-#     def passive_ball_policy(self, decode_state):
-#         ## The code below Copied from the above AdversarialSearchPlayer.policy function
-#         encoded_state_tup = tuple( self.b.encode_single_pos(s) for s in decode_state )
-#         state_tup = tuple((encoded_state_tup, self.player_idx))
-        
-#         ## The code below was added with prompt assistance of Github Copilot(AI too
-#         # Generate valid actions
-#         valid_actions = self.gsp.generate_valid_actions(state_tup)
-#         ball_actions = [action for action in valid_actions if action[0] == 5]
-        
-#         if ball_actions:
-#             # Select the first valid ball action
-#             action = ball_actions[0]
-#             value = 0 
-#             return action, value
-#         elif valid_actions:
-#             # If no ball actions, select the first valid action
-#             action = next(iter(valid_actions))
-#             value = 0 
-#             return action, value
-        
-#         return None, 0
-    
- 
     
 # Below is the class for PassivePlayer
 class PassivePlayer(Player):
@@ -732,9 +660,8 @@ class PassivePlayer(Player):
             action = ball_actions[0]
             value = 0 
             return action, value
-
-        # If no ball actions, select the first valid action
-        action = next(iter(valid_actions))
-        value = 0 
-        return action, value
-        
+        else:
+            action = list(valid_actions)[0]
+            value = 0 
+            return action, value
+    
