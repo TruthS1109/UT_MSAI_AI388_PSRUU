@@ -105,6 +105,7 @@ class GameStateProblem(Problem):
 
         return self.sim.generate_valid_actions(p)
 
+
     def execute(self, state: tuple, action: tuple):
         """
         From the given state, executes the given action
@@ -166,6 +167,7 @@ class GameStateProblem(Problem):
         
         s, p = state
         self.board.state = np.array(s)
+        self.board.decode_state = self.board.make_state()
         
         ## Retun True if this is a goal state for current player
         return self.board.is_goal(p)
@@ -176,20 +178,15 @@ class GameStateProblem(Problem):
         ## This part was completed with prompt assistance of Github Copilot(AI tool)
         s, _ = state
         self.board.state = np.array(s)
+        self.board.decode_state = self.board.make_state()
         return self.board.is_termination_state()
-        # s, p = state
-        # board = BoardState()
-        # board.state = np.array(s)
-        # board.decode_state = board.make_state()
-        
-        # return board.is_termination_state()
-
     
     # Define the evaluation function for adversarial search
     def evaluate_state(self, state, player_idx):
         ## This part was completed with prompt assistance of Github Copilot(AI tool)
-        s, current_player = state
+        s, _ = state
         self.board.state = np.array(s)
+        self.board.decode_state = self.board.make_state()
         board = self.board
         
         # ## The code below was completed with prompt assistance of Github Copilot(AI tool) And also ChatGPT with modifications
@@ -205,32 +202,17 @@ class GameStateProblem(Problem):
             
         ## End of LLM suggested code
         
-        #Get actions for both players
-        # actions_player_0 = len(self.get_actions( (s, player_idx) ))
-        # actions_player_1 = len(self.get_actions( (s, (player_idx + 1) % 2 ) ))
-        
         ## Code for Debugging
         actions_player_0 = len(self.get_actions((s, 0)))
         actions_player_1 = len(self.get_actions((s, 1)))
         
         ## Debug with simple heusristic: action advantage + progress towards goal 
         ## The code below was completed with prompt assistance of Github Copilot(AI tool)
-        action_advantage = actions_player_0 - actions_player_1
-        
-        ##--------------------------------------------------------------
-        ## Alternative evaluation methods with simpler heuristic
-        # # Progress evaluation based on distance to goal
-        # if player_idx == 0:   # WHITE (to reach row 7; positions 50-55)
-        #     ball_position = board.decode_single_pos(s[5])  # furthest ball for WHITE
-        #     progress = ball_position[1]  # row number (0-7) ( or ball_position//8)
-        # else:  # BLACK (to reach row 0; positions 0-5)
-        #     ball_position = board.decode_single_pos(s[11])  # furthest ball for BLACK
-        #     progress = 7 - ball_position[1]  # row number from bottom
-        # # Combine evaluations
-        # value = action_advantage * 1.5 + progress * 5  ##To try with different weights
-        ##--------------------------------------------------------------    
-            
-
+        if player_idx == 0:  # WHITE
+            action_advantage = actions_player_0 - actions_player_1
+        else:  # BLACK
+            action_advantage = actions_player_1 - actions_player_0
+   
          ###### 
          ##Debug with support from LLM tool (ChatGPT) suggestions
          ## Try with different evalation methods to consider blocking opponent's ball
@@ -247,13 +229,31 @@ class GameStateProblem(Problem):
                 threat = Oppt_ball[1]           
             
         # Combine evaluations
-        value = action_advantage * 3 + progress * 5 - threat * 3  ##To try with different weights
+        ## Weights below passed online grading with 196 points
+        # value = action_advantage * 3 + progress * 5 - threat * 3  ##To try with different weights
+        
+        value = action_advantage * 3 + progress * 10 - threat * 8  ##To try with different weights
+        
+        ##--------------------------------------------------------------
+        ## Alternative evaluation methods with simpler heuristic
+        # # Progress evaluation based on distance to goal
+        # if player_idx == 0:   # WHITE (to reach row 7; positions 50-55)
+        #     ball_position = board.decode_single_pos(s[5])  # furthest ball for WHITE
+        #     progress = ball_position[1]  # row number (0-7) ( or ball_position//8)
+        # else:  # BLACK (to reach row 0; positions 0-5)
+        #     ball_position = board.decode_single_pos(s[11])  # furthest ball for BLACK
+        #     progress = 7 - ball_position[1]  # row number from bottom
+        # # Combine evaluations
+        # value = action_advantage * 1.5 + progress * 5  ##To try with different weights
+        ##--------------------------------------------------------------    
         
         return value
 
 
     ## Define order actions by heuristic value for alpha-beta pruning
     def order_actions(self, state, actions, player_idx):
+        
+        s, current_player = state
         
         action_values = []
         ## The code below was completed with prompt assistance of Github Copilot(AI tool)
@@ -262,20 +262,12 @@ class GameStateProblem(Problem):
             value = self.evaluate_state(next_state, player_idx)
             action_values.append((action, value))
         
-        # # Sort actions based on their heuristic values
-        # if player_idx == 0:  # Maximizing player
-        #     action_values.sort(key=lambda x: x[1], reverse=True)
-        # else:  # Minimizing player
-        #     action_values.sort(key=lambda x: x[1])
-        
-        # ordered_actions = [action for action, v in action_values]
-        
         ## The logic below was updated with LLM tool (ChatGPT) suggestions
         # Max player: largest first
         # Min player: smallest first
-        if player_idx == 0:
+        if current_player == player_idx: # Maximizing player
             ordered_actions = [a for a, v in sorted(action_values, key=lambda x: -x[1])]
-        else:
+        else: # Minimizing player
             ordered_actions = [a for a, v in sorted(action_values, key=lambda x: x[1])]
         
         return ordered_actions 
@@ -290,7 +282,6 @@ class GameStateProblem(Problem):
         if state_tup is None:
             state_tup = self.initial_state
             
-        # initial_state = state_tup
         s, initial_player = state_tup
         
         #Get all actions for current player
@@ -299,13 +290,15 @@ class GameStateProblem(Problem):
         if not actions:
             return None, self.evaluate_state(state_tup, initial_player)
 
+        # Initialize alpha-beta values
         alpha = -math.inf
         beta = math.inf
         best_action = None
         best_value = -math.inf
         
         #Order actions for alpha-beta pruning ---  more effective pruning
-        actions = self.order_actions(state_tup, actions, initial_player)  #or actions 
+        actions = self.order_actions(state_tup, actions, initial_player)
+
         ##During Testing and Debugging
         ## The code below was completed with prompt assistance of Github Copilot(AI tool) 
         ## Also with ChatGPT suggestions for modifications
@@ -317,14 +310,17 @@ class GameStateProblem(Problem):
                 best_value = value
                 best_action = action
             alpha = max(alpha, best_value)
+            
+            if beta <= alpha:
+                break #Alpha-Beta Pruning
            
         if best_action is None:
-            best_action = list(actions)[0]
-            # best_value = self.evaluate_state(state_tup, initial_player)
+            # best_action = list(actions)[0]
+            best_action = actions[0] if len(actions) > 0 else None
             
         return best_action, best_value 
     
-     ## Define the MaxValue function for minimax with alpha-betapruning based on the pseudocode in the lecture slides
+    ## Define the MaxValue function for minimax with alpha-beta pruning based on the pseudocode in the lecture slides
     def MaxValue_AlphaBeta (self, state, max_player, depth, alpha, beta):
         ## Maximizing player
         
@@ -389,6 +385,8 @@ class GameStateProblem(Problem):
     
     # ###===========================================================
     # ### Debugging with different minimax and alpha-beta pruning function below
+    # ### Kept for reference only
+    # ###===========================================================
     # def MiniMaxValue_AlphaBeta(self, initial_state, max_player, search_depth):
         
     #     #Intial values 

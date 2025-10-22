@@ -234,7 +234,7 @@ class Rules:
         
         # A block may only move to unoccupied spaces on the board (cannot land on any block)
         # Note: balls occupy the same cell as their block; we only check block occupancy (10 block positions)
-        ## The line below was added with prompt assistance of Github Copilot(AI tool)
+        ## LLM Code, The line below was added with prompt assistance of Github Copilot(AI tool)
         block_positions = {int(board_state.state[i]) for i in range(0,5)} | {int(board_state.state[i]) for i in range(6,11)}
 
         valid_moves = {m for m in candidate_moves if m not in block_positions}
@@ -325,8 +325,8 @@ class Rules:
         else:
             row_step = 1 if dist_row > 0 else -1
         
-        #Check all positions between start_pos and end_pos for obstructions
         ### The following part was completed with support of LLM tool(ChatGPT) assistance
+        #Check all positions between start_pos and end_pos for obstructions
         steps = max(abs(dist_col), abs(dist_row))
         for step in range(1, steps):
             intermediate_col = start_col + step * col_step
@@ -366,6 +366,7 @@ class GameSimulator:
             ## Determine the round number, and the player who needs to move
             self.current_round += 1
             player_idx = self.current_round % 2
+            
             ## For the player who needs to move, provide them with the current game state
             # print(f"DEBUG====Turn for player {player_idx} ({type(self.players[player_idx]).__name__})")
             # print("DEBUG: game_state =", self.game_state.make_state())
@@ -534,14 +535,6 @@ class AdversarialSearchPlayer(Player):
         
         # val_a, val_b, val_c = (1, 2, 3)
         # return self.policy_fnc(state_tup, val_a, val_b, val_c)
-        
-        #Define my own parameters for the policy function
-        # return self.policy_fnc(state_tup, self.search_depth)
-        # action, value = self.policy_fnc(state_tup, self.search_depth)
-        # return action, value
-        
-         ## The code below was added with LLM Tool (ChatGPT) assistance
-         # Call adversarial search method - it should return (action, value)
          
         result = self.policy_fnc(state_tup, self.search_depth, None, None)
         
@@ -562,7 +555,7 @@ class AdversarialSearchPlayer(Player):
         return action, value  
         ## End of LLM suggested code
     
-# Below is a random player  for testing. 
+# Below is a random player for local testing. 
 class RandomPlayer(Player):
     def __init__(self, gsp, player_idx):
         super().__init__(None)
@@ -574,12 +567,12 @@ class RandomPlayer(Player):
         """
         Chooses a random valid action for testing.
         """
+        ## The code below Copied from the above AdversarialSearchPlayer.policy function
         encoded_state_tup = tuple(self.b.encode_single_pos(s) for s in decode_state)
         # state_tup = tuple((encoded_state_tup, self.player_idx))
         state_tup = (encoded_state_tup, self.player_idx)
 
         valid_actions = self.gsp.get_actions(state_tup)
-        # valid_actions = self.gsp.generate_valid_actions(self.player_idx)
         if not valid_actions:
             print(f"[DEBUG] No valid actions for player {self.player_idx}, state={state_tup}")
             return None, 0
@@ -630,4 +623,4 @@ class PassivePlayer(Player):
             action = list(valid_actions)[0]
             value = 0 
             return action, value
-    
+        ## End of LLM suggested code
