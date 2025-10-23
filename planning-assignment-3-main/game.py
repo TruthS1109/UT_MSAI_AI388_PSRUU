@@ -1,7 +1,5 @@
 import numpy as np
 import random
-import matplotlib.pyplot as plt
-from pathlib import Path
 
 class BoardState:
     """
@@ -172,91 +170,91 @@ class BoardState:
 
         return True
     ##============================================================================
-    ## For debugging purposes visualization only
-    ## The code below was copied from EDstem post by classmate (Michael Moore and Daniel De Araujo)
-    # def to_plt(self):
-    #     """
-    #     Plot the board via matplotlib with:
-    #     - Tight figure sizing (width:height matches board cols:rows)
-    #     - Header in a separate tiny axes above the board (won't be clipped)
-    #     - Per-square indices (0 at bottom-left to 55 at top-right)
-    #     """
-    #     import matplotlib.pyplot as plt
-    #     from matplotlib import gridspec, patheffects as pe
-    #     import numpy as np
-    #     from pathlib import Path
+    # For debugging purposes visualization only
+    # The code below was copied from EDstem post by classmate (Michael Moore and Daniel De Araujo)
+    def to_plt(self):
+        """
+        Plot the board via matplotlib with:
+        - Tight figure sizing (width:height matches board cols:rows)
+        - Header in a separate tiny axes above the board (won't be clipped)
+        - Per-square indices (0 at bottom-left to 55 at top-right)
+        """
+        import matplotlib.pyplot as plt
+        from matplotlib import gridspec, patheffects as pe
+        import numpy as np
+        from pathlib import Path
         
-    #     output_dir = Path("board_states")
-    #     output_dir.mkdir(exist_ok=True)
+        output_dir = Path("board_states")
+        output_dir.mkdir(exist_ok=True)
 
-    #     ball_idx = [5, 11]
-    #     rect_kwargs = {'width': 1, 'height': 1, 'linewidth': 2.}
-    #     piece_kwargs = rect_kwargs | {'alpha': 1., 'edgecolor': 'black'}
-    #     circle_kwargs = {'radius': 0.15, 'edgecolor': 'black', 'linewidth': 0.75, 'alpha': 1.}
+        ball_idx = [5, 11]
+        rect_kwargs = {'width': 1, 'height': 1, 'linewidth': 2.}
+        piece_kwargs = rect_kwargs | {'alpha': 1., 'edgecolor': 'black'}
+        circle_kwargs = {'radius': 0.15, 'edgecolor': 'black', 'linewidth': 0.75, 'alpha': 1.}
 
-    #     # Build board color map (base cell + optional ball overlay)
-    #     board = np.full((self.N_COLS, self.N_ROWS), 'white', dtype=np.dtypes.StringDType)
-    #     for index, value in enumerate(self.state):
-    #         player = (index < (len(self.state) // 2))  # True for white (first half), False for black
-    #         cell = "#fef3ce" if player else "#b59149"
-    #         if index in ball_idx:
-    #             cell += ";" + ('white' if player else 'black')
-    #         board[self.decode_single_pos(value)] = cell
+        # Build board color map (base cell + optional ball overlay)
+        board = np.full((self.N_COLS, self.N_ROWS), 'white', dtype=np.dtypes.StringDType)
+        for index, value in enumerate(self.state):
+            player = (index < (len(self.state) // 2))  # True for white (first half), False for black
+            cell = "#fef3ce" if player else "#b59149"
+            if index in ball_idx:
+                cell += ";" + ('white' if player else 'black')
+            board[self.decode_single_pos(value)] = cell
 
-    #     # Figure sizing: match board aspect so cells are square
-    #     aspect_ratio = self.N_COLS / self.N_ROWS
-    #     fig_h = 9
-    #     fig_w = fig_h * aspect_ratio*0.9
-    #     fig = plt.figure(figsize=(fig_w, fig_h))
+        # Figure sizing: match board aspect so cells are square
+        aspect_ratio = self.N_COLS / self.N_ROWS
+        fig_h = 9
+        fig_w = fig_h * aspect_ratio*0.9
+        fig = plt.figure(figsize=(fig_w, fig_h))
 
-    #     # GridSpec: tiny header row + main board
-    #     gs = gridspec.GridSpec(2, 1, height_ratios=[0.18, 1.0], hspace=0.05)
-    #     ax_hdr = fig.add_subplot(gs[0])
-    #     ax = fig.add_subplot(gs[1])
+        # GridSpec: tiny header row + main board
+        gs = gridspec.GridSpec(2, 1, height_ratios=[0.18, 1.0], hspace=0.05)
+        ax_hdr = fig.add_subplot(gs[0])
+        ax = fig.add_subplot(gs[1])
 
-    #     # Header text
-    #     ax_hdr.axis('off')
-    #     state_list = "W: " + ','.join([str(n).rjust(3) for n in self.state[0:  5]]) + "  (" + self.state[5].__str__() + ")  -- B: " + \
-    #                  ','.join([str(n).rjust(3) for n in self.state[6: 11]]) + "  (" + self.state[11].__str__() + ")"
-    #     ax_hdr.text(
-    #         0.5, 0.5,
-    #         "Board State\n" + f"[{state_list}  ]",
-    #         ha='center', va='center', fontsize=10
-    #     )
+        # Header text
+        ax_hdr.axis('off')
+        state_list = "W: " + ','.join([str(n).rjust(3) for n in self.state[0:  5]]) + "  (" + self.state[5].__str__() + ")  -- B: " + \
+                     ','.join([str(n).rjust(3) for n in self.state[6: 11]]) + "  (" + self.state[11].__str__() + ")"
+        ax_hdr.text(
+            0.5, 0.5,
+            "Board State\n" + f"[{state_list}  ]",
+            ha='center', va='center', fontsize=10
+        )
 
-    #     # Main board axes
-    #     ax.set(aspect='equal', xlim=(0, self.N_COLS), ylim=(0, self.N_ROWS))
-    #     ax.axis('off')
+        # Main board axes
+        ax.set(aspect='equal', xlim=(0, self.N_COLS), ylim=(0, self.N_ROWS))
+        ax.axis('off')
 
-    #     # Draw cells and balls
-    #     for (c, r), value in np.ndenumerate(board):
-    #         for i, color in enumerate(value.split(';')):
-    #             if i == 0:
-    #                 patch = plt.Rectangle((c, r), facecolor=color, zorder=1, **piece_kwargs)
-    #             else:
-    #                 patch = plt.Circle((c + 0.5, r + 0.5), facecolor=color, zorder=3, **circle_kwargs)
-    #             ax.add_patch(patch)
+        # Draw cells and balls
+        for (c, r), value in np.ndenumerate(board):
+            for i, color in enumerate(value.split(';')):
+                if i == 0:
+                    patch = plt.Rectangle((c, r), facecolor=color, zorder=1, **piece_kwargs)
+                else:
+                    patch = plt.Circle((c + 0.5, r + 0.5), facecolor=color, zorder=3, **circle_kwargs)
+                ax.add_patch(patch)
 
-    #     # Per-square indices (lower-left corner of each cell)
-    #     for r in range(self.N_ROWS):
-    #         for c in range(self.N_COLS):
-    #             idx = c + self.N_COLS * r  # matches encode_single_pos
-    #             txt = ax.text(
-    #                 c + 0.06, r + 0.06, str(idx),
-    #                 fontsize=8, ha='left', va='bottom', color='black', zorder=4
-    #             )
-    #             # txt.set_path_effects([pe.withStroke(linewidth=1.2, foreground='white')])
+        # Per-square indices (lower-left corner of each cell)
+        for r in range(self.N_ROWS):
+            for c in range(self.N_COLS):
+                idx = c + self.N_COLS * r  # matches encode_single_pos
+                txt = ax.text(
+                    c + 0.06, r + 0.06, str(idx),
+                    fontsize=8, ha='left', va='bottom', color='black', zorder=4
+                )
+                # txt.set_path_effects([pe.withStroke(linewidth=1.2, foreground='white')])
 
-    #     # Layout & save
-    #     plt.tight_layout()
-    #     fmt = "_state-{x:04d}.png"
-    #     plot_file = next((output_dir / fmt.format(x=x) for x in range(1000)
-    #                       if not (output_dir / fmt.format(x=x)).exists()), None)
-    #     if plot_file:
-    #         print(f"BoardState written to {plot_file}")
-    #         plt.savefig(plot_file, dpi=150, bbox_inches='tight')
-    #     plt.show()
-    #     plt.close()
+        # Layout & save
+        plt.tight_layout()
+        fmt = "_state-{x:04d}.png"
+        plot_file = next((output_dir / fmt.format(x=x) for x in range(1000)
+                          if not (output_dir / fmt.format(x=x)).exists()), None)
+        if plot_file:
+            print(f"BoardState written to {plot_file}")
+            plt.savefig(plot_file, dpi=150, bbox_inches='tight')
+        plt.show()
+        plt.close()
   ##============================================================================
 class Rules:
     
