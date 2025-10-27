@@ -81,6 +81,7 @@ def sample_observation(state):
                 observation_distribution[pos[1], pos[0]] = 0.10
         else:  # out of bounds
             blocked_count += 1
+            
     # Add blocked probabilities to center
     center_prob += blocked_count * 0.10
     observation_distribution[true_position[1], true_position[0]] = center_prob
@@ -133,7 +134,6 @@ def sample_transition(state, action):
   ### Code below was completed with prompting support from a LLM tool (Copilot)
 
     # Check if the new position is valid (within bounds and not occupied)
-    # within board bounds and not occupied by other pieces
     if (new_col, new_row) not in positions[1:] and 0 <= new_col < ncols and 0 <= new_row < nrows:
         # Create a zero probability distribution
         transition_probabilities = np.zeros((nrows, ncols))
@@ -176,6 +176,7 @@ def initialize_belief(initial_state, style="uniform"):
     
     
     ### The code below was completed with prompting support from an LLM tool (Copilot)
+    ## During Debugging, With suggestions from ChatGPT
     # For "uniform" style:
     if style == "uniform":
         # Use precise calculation to avoid floating point errors
@@ -183,29 +184,12 @@ def initialize_belief(initial_state, style="uniform"):
         free_count = nrows * ncols - len(occupied_set)
         
         if free_count > 0:
-            prob = 1.0 / (free_count+1)
+            prob = 1.0 / free_count
             for r in range(nrows):
                 for c in range(ncols):
                     if (c, r) not in occupied_set:
                         belief[r, c] = prob
-    # if style == "uniform":
-    #     #Count number of free cells
-    #     free_cells = []
-    #     for r in range(nrows):
-    #         for c in range(ncols):
-    #             if (c,r) not in positions:
-    #                 free_cells.append((c,r))
-        
-    #     num_free = len(free_cells)
-                    
-        # free_cells = [(c,r) for c in range(ncols) for r in range(nrows) if (c,r) not in positions]
-        # num_free = len(free_cells)
-        #Assign uniform probability to free cells
-        # for (c,r) in free_cells:
-        #     belief[r,c] = 1.0
-        # Normalize to sum to 1
-        # belief /= np.sum(belief)
-
+                        
     # For "dirac" style:
     elif style == "dirac":
         #Set probability 1.0 at the true position of piece 0
@@ -216,11 +200,10 @@ def initialize_belief(initial_state, style="uniform"):
     for pos in positions[1:]:
         belief[pos[1], pos[0]] = 0.0
     
-    ### End of code completed with LLM tool support
+    ### End of code completed with LLM tool support 
     
-    # belief /= np.sum(belief)
     return belief
-
+     
 ### The helper function below was created with LLM Tool support (ChatGPT)
 def get_observation_distribution(position, reference_state):
     """Get observation distribution if piece were at given position"""
@@ -244,14 +227,6 @@ def get_observation_distribution(position, reference_state):
     
     center_prob += blocked_count * 0.10
     dist[position[1], position[0]] = center_prob
-    
-    # #Zero out occupied cells
-    # for (c, r) in positions[1:]:
-    #     dist[r, c] = 0.0
-
-    # total = np.sum(dist)
-    # if total > 0:
-    #     dist /= total  # Normalize to sum to 1
     
     return dist
 ### The helper function above was created with LLM Tool support (ChatGPT)
@@ -317,7 +292,7 @@ def belief_predict(prior, action, reference_state):
     Returns:
         posterior: a 2D numpy array with shape (nrows, ncols)
     """
-    ### Code in this function was completed with prompting support from a LLM tool (Copilot)
+    ### Code in this function was completed with prompting support from a LLM tool (Copilot) And Debug with suggestions from ChatGPT
     
     #Create a new belief array initialized to zeros
     nrows, ncols = prior.shape
