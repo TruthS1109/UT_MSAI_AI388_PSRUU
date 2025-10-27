@@ -58,6 +58,10 @@ def sample_observation(state):
     
     #Create a 2D numpy array (nrows, ncols) to represent the observation distribution and initialize to zeros
     observation_distribution = np.zeros((nrows, ncols))
+        
+    # For the true position (purple square in diagrams):
+    # Set probability = 60% if all adjacent squares are free
+    # observation_distribution[true_position[1], true_position[0]] = 0.60
 
     # Set probability = higher value if some adjacent squares are blocked
     adjacent_positions = [(true_position[0]-1, true_position[1]),   #left
@@ -93,8 +97,19 @@ def sample_observation(state):
         observation_distribution[true_position[1], true_position[0]] = 1.0
     
     #Sample an observation position based on the observation distribution
+    # flat_dist = observation_distribution.flatten()
+    # sampled_index = np.random.choice(nrows * ncols, p=flat_dist/flat_dist.sum())
+    # sampled_position = (sampled_index % ncols, sampled_index // ncols)
+    
+    # non_zero_indices = np.flatnonzero(observation_distribution)
+    # non_zero_probs = observation_distribution.flat[non_zero_indices]
+    # normalized_probs = non_zero_probs / np.sum(non_zero_probs)
+    
+    # sampled_flat_index = np.random.choice(non_zero_indices, p=normalized_probs)
+    # sampled_position = (sampled_flat_index % ncols, sampled_flat_index // ncols)
+    # sample observation
     flat_dist = observation_distribution.flatten()
-    sampled_idx = np.random.choice(len(flat_dist), p=flat_dist/np.sum(flat_dist))
+    sampled_idx = np.random.choice(len(flat_dist), p=flat_dist)
     sampled_position = (sampled_idx % ncols, sampled_idx // ncols)
 
     ### End of code completed with LLM tool support
@@ -171,54 +186,32 @@ def initialize_belief(initial_state, style="uniform"):
     nrows, ncols = dimensions
     
     #Create a 2D numpy array (nrows, ncols) to represent the belief and initialize to zeros
-    # belief = np.ones((nrows, ncols))
-    belief = np.zeros((nrows, ncols))
+    belief = np.ones((nrows, ncols))
+    # belief = np.zeros((nrows, ncols))
     
+    for (r,c) in positions[1:]:
+        belief[c,r] = 0.0  # Zero out occupied cells
     
     ### The code below was completed with prompting support from an LLM tool (Copilot)
     # For "uniform" style:
     if style == "uniform":
-        # Use precise calculation to avoid floating point errors
-        occupied_set = set(positions[1:])  # All pieces are occupied
-        free_count = nrows * ncols - len(occupied_set)
-        
-        if free_count > 0:
-            prob = 1.0 / (free_count+1)
-            for r in range(nrows):
-                for c in range(ncols):
-                    if (c, r) not in occupied_set:
-                        belief[r, c] = prob
-    # if style == "uniform":
-    #     #Count number of free cells
-    #     free_cells = []
-    #     for r in range(nrows):
-    #         for c in range(ncols):
-    #             if (c,r) not in positions:
-    #                 free_cells.append((c,r))
-        
-    #     num_free = len(free_cells)
-                    
-        # free_cells = [(c,r) for c in range(ncols) for r in range(nrows) if (c,r) not in positions]
+        #Count number of free cells
+        free_cells = [(c,r) for c in range(ncols) for r in range(nrows) if (c,r) not in positions]
         # num_free = len(free_cells)
         #Assign uniform probability to free cells
-        # for (c,r) in free_cells:
-        #     belief[r,c] = 1.0
+        for (c,r) in free_cells:
+            belief[r,c] = 1.0
         # Normalize to sum to 1
         # belief /= np.sum(belief)
 
     # For "dirac" style:
-    elif style == "dirac":
+    if style == "dirac":
         #Set probability 1.0 at the true position of piece 0
         true_position = positions[0]
         belief[true_position[1], true_position[0]] = 1.0
     
-    #Zero out occupied cells
-    for pos in positions[1:]:
-        belief[pos[1], pos[0]] = 0.0
-    
     ### End of code completed with LLM tool support
-    
-    # belief /= np.sum(belief)
+    belief /= np.sum(belief)
     return belief
 
 ### The helper function below was created with LLM Tool support (ChatGPT)
@@ -245,13 +238,13 @@ def get_observation_distribution(position, reference_state):
     center_prob += blocked_count * 0.10
     dist[position[1], position[0]] = center_prob
     
-    # #Zero out occupied cells
-    # for (c, r) in positions[1:]:
-    #     dist[r, c] = 0.0
+    #Zero out occupied cells
+    for (c, r) in positions[1:]:
+        dist[r, c] = 0.0
 
-    # total = np.sum(dist)
-    # if total > 0:
-    #     dist /= total  # Normalize to sum to 1
+    total = np.sum(dist)
+    if total > 0:
+        dist /= total  # Normalize to sum to 1
     
     return dist
 ### The helper function above was created with LLM Tool support (ChatGPT)
@@ -281,16 +274,16 @@ def belief_update(prior, observation, reference_state):
                 continue
                 
             # Get observation distribution if piece were at (c, r)
-            observation_dist = get_observation_distribution((c, r), reference_state)
+            obs_dist = get_observation_distribution((c, r), reference_state)
 
             # Likelihood
-            likelihood[r, c] = observation_dist[obs_row, obs_col]
-
+            likelihood[r, c] = obs_dist[obs_row, obs_col]
+    
     unnormalized_posterior = likelihood * prior
 
-    for pos in positions[1:]:
-        unnormalized_posterior[pos[1], pos[0]] = 0.0  # Zero out occupied cells
-
+    for (c,r) in reference_state[0][1:]:
+        unnormalized_posterior[r, c] = 0.0  # Zero out occupied cells
+    
     total = np.sum(unnormalized_posterior)
     
     if total > 0:
@@ -302,6 +295,33 @@ def belief_update(prior, observation, reference_state):
 
 
     ### End of code completed with prompting support from a LLM tool (Copilot)
+
+# def belief_update(prior, observation, reference_state):
+#     """
+#     Given a prior an observation, compute the posterior belief
+
+#     Inputs:
+#         prior: a 2D numpy array with shape (nrows, ncols)
+#         observation: a 2-tuple (col, row) representing the observation of a piece at a position
+#         reference_state: a 2-tuple of (positions, dimensions), the same as defined in StateGenerator.sample_state
+
+#     Returns:
+#         posterior: a 2D numpy array with shape (nrows, ncols)
+#     """
+#     ### Code in this function was completed with prompting support from a LLM tool (Copilot)
+    
+#     #Get the observation distribution using logic from sample_observation
+#     _, obs_distribution = sample_observation(reference_state)
+    
+#     #Apply Bayes' rule: posterior proportional to likelihood * prior
+#     likelihood = obs_distribution
+#     unnormalized_posterior = likelihood * prior
+    
+#     #Normalize the posterior
+#     posterior = unnormalized_posterior / np.sum(unnormalized_posterior)
+    
+#     ### End of code prompted with LLM tool support
+#     return posterior
 
 def belief_predict(prior, action, reference_state):
     """
